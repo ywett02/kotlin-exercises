@@ -3,8 +3,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.2.0"
-    kotlin("plugin.power-assert") version "2.2.0"
+    kotlin("jvm") version "2.0.0"
+    kotlin("plugin.power-assert") version "2.0.0"
     application
 }
 
@@ -52,5 +52,5 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 kotlin {
-    jvmToolchain(20)
+    jvmToolchain(21)
 }
