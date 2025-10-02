@@ -3,8 +3,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.0.0"
-    kotlin("plugin.power-assert") version "2.0.0"
+    kotlin("jvm") version "2.2.20-RC2"
+    kotlin("plugin.power-assert") version "2.2.20-RC2"
     application
 }
 
@@ -25,13 +25,14 @@ dependencies {
     implementation("io.ktor:ktor-client-core:3.0.2")
     implementation("io.ktor:ktor-client-java:3.0.2")
     implementation("io.ktor:ktor-client-websockets:3.0.2")
+    implementation("app.cash.turbine:turbine:1.2.1") // For ObserveAppointmentsUseCase.kt
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.3")
 }
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
         optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi")
-//        optIn.add("kotlinx.coroutines.ExperimentalAtomicApi")
+        optIn.add("kotlinx.coroutines.ExperimentalAtomicApi")
         optIn.add("kotlinx.coroutines.ExperimentalUuidApi")
 //        freeCompilerArgs.add("-Xdebug")
     }
@@ -51,6 +52,6 @@ tasks.withType<JavaCompile>().configureEach {
 
 }
 
-kotlin {
-    jvmToolchain(21)
-}
+//kotlin {
+//    jvmToolchain(20)
+//}
