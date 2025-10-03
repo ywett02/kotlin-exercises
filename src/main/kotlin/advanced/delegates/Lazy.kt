@@ -1,13 +1,23 @@
 package advanced.delegates.lazy
 
-import kotlin.system.measureTimeMillis      
+import kotlin.system.measureTimeMillis
 
 data class BlogPost(
     val title: String,
     val content: String,
     val author: Author,
 ) {
-    // TODO: Add properties here
+
+    val authorName: String = "${author.name} ${author.name}"
+    val wordCount: Int by lazy {
+        calculateWordCount()
+    }
+    val isLongRead: Boolean
+        get() = calculateIsLongRead()
+
+    val summary: String by lazy {
+        generateSummary(content)
+    }
 
     private fun calculateWordCount(): Int {
         Thread.sleep(1)
