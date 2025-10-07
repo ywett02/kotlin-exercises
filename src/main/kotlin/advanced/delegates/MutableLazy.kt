@@ -8,7 +8,26 @@ import kotlin.system.measureTimeMillis
 
 fun <T> mutableLazy(
     initializer: () -> T
-): ReadWriteProperty<Any?, T> = TODO()
+): ReadWriteProperty<Any?, T> = MutableLazy(initializer)
+
+class MutableLazy<T>(private var initializer: (() -> T)? = null): ReadWriteProperty<Any?, T> {
+
+    private var value: T? = null
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        if(initializer != null) {
+            value = initializer?.invoke()
+            initializer = null
+        }
+
+        return value as T
+    }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        initializer = null
+        this.value = value
+    }
+}
 
 class MutableLazyTest {
 
