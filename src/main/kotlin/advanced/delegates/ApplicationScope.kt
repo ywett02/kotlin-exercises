@@ -6,7 +6,12 @@ import kotlinx.coroutines.SupervisorJob
 import org.junit.Test
 import kotlin.coroutines.EmptyCoroutineContext
 
-// TODO
+
+class ApplicationScope(
+    private val scope: CoroutineScope,
+    private val applicationScope: ApplicationControlScope,
+    private val loggingScope: LoggingScope
+) : CoroutineScope by scope, ApplicationControlScope by applicationScope, LoggingScope by loggingScope
 
 interface ApplicationControlScope {
     val application: Application
@@ -24,42 +29,42 @@ interface LoggingScope {
 }
 
 class ApplicationScopeTest {
-//    private val fakeApplicationScope = FakeApplicationControlScope(
-//        application = Application("Test"),
-//    )
-//    private val fakeLoggingScope = FakeLoggingScope()
-//    private val coroutineScope = CoroutineScope(SupervisorJob())
-//    private val applicationScope = ApplicationScope(
-//        scope = coroutineScope,
-//        applicationScope = fakeApplicationScope,
-//        loggingScope = fakeLoggingScope,
-//    )
-//
-//    @Test
-//    fun `should use coroutine scope`() {
-//        assert(applicationScope.coroutineContext == coroutineScope.coroutineContext)
-//    }
-//
-//    @Test
-//    fun `should use application scope`() {
-//        assert(applicationScope.application.name == "Test")
-//        applicationScope.start()
-//        assert(fakeApplicationScope.isRunning())
-//        applicationScope.stop()
-//        assert(!fakeApplicationScope.isRunning())
-//    }
-//
-//    @Test
-//    fun `should use logging scope`() {
-//        applicationScope.logInfo("Info")
-//        applicationScope.logWarning("Warning")
-//        applicationScope.logError("Error")
-//        assert(fakeLoggingScope.messages == listOf(
-//            "INFO: Info",
-//            "WARNING: Warning",
-//            "ERROR: Error",
-//        ))
-//    }
+    private val fakeApplicationScope = FakeApplicationControlScope(
+        application = Application("Test"),
+    )
+    private val fakeLoggingScope = FakeLoggingScope()
+    private val coroutineScope = CoroutineScope(SupervisorJob())
+    private val applicationScope = ApplicationScope(
+        scope = coroutineScope,
+        applicationScope = fakeApplicationScope,
+        loggingScope = fakeLoggingScope,
+    )
+
+    @Test
+    fun `should use coroutine scope`() {
+        assert(applicationScope.coroutineContext == coroutineScope.coroutineContext)
+    }
+
+    @Test
+    fun `should use application scope`() {
+        assert(applicationScope.application.name == "Test")
+        applicationScope.start()
+        assert(fakeApplicationScope.isRunning())
+        applicationScope.stop()
+        assert(!fakeApplicationScope.isRunning())
+    }
+
+    @Test
+    fun `should use logging scope`() {
+        applicationScope.logInfo("Info")
+        applicationScope.logWarning("Warning")
+        applicationScope.logError("Error")
+        assert(fakeLoggingScope.messages == listOf(
+            "INFO: Info",
+            "WARNING: Warning",
+            "ERROR: Error",
+        ))
+    }
 }
 
 class FakeApplicationControlScope(
