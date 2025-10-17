@@ -14,9 +14,13 @@ import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalContracts::class)
 suspend fun measureCoroutine(
     body: suspend () -> Unit
 ): Duration {
+    contract {
+        callsInPlace(body, InvocationKind.EXACTLY_ONCE)
+    }
     val dispatcher = coroutineContext[ContinuationInterceptor]
     return if (dispatcher is TestDispatcher) {
         val before = dispatcher.scheduler.currentTime
@@ -31,23 +35,23 @@ suspend fun measureCoroutine(
 }
 
 suspend fun main() {
-    //runTest {
-    //    val result: String
-    //    val duration = measureCoroutine {
-    //        delay(1000)
-    //        result = "OK"
-    //    }
-    //    println(duration) // 1000 ms
-    //    println(result) // OK
-    //}
-    //
-    //runBlocking {
-    //    val result: String
-    //    val duration = measureCoroutine {
-    //        delay(1000)
-    //        result = "OK"
-    //    }
-    //    println(duration) // 1000 ms
-    //    println(result) // OK
-    //}
+    runTest {
+        val result: String
+        val duration = measureCoroutine {
+            delay(1000)
+            result = "OK"
+        }
+        println(duration) // 1000 ms
+        println(result) // OK
+    }
+
+    runBlocking {
+        val result: String
+        val duration = measureCoroutine {
+            delay(1000)
+            result = "OK"
+        }
+        println(duration) // 1000 ms
+        println(result) // OK
+    }
 }
