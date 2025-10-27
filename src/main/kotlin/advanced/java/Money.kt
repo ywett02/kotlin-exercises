@@ -1,18 +1,22 @@
+@file:JvmName("MoneyUtils")
 package advanced.java
 
 import java.math.BigDecimal
 
-data class Money(
+data class Money @JvmOverloads constructor(
     val amount: BigDecimal = BigDecimal.ZERO,
     val currency: Currency = Currency.EUR,
 ) {
     companion object {
+        @JvmStatic
         fun eur(amount: String) =
             Money(BigDecimal(amount), Currency.EUR)
 
+        @JvmStatic
         fun usd(amount: String) =
             Money(BigDecimal(amount), Currency.USD)
 
+        @JvmField
         val ZERO_EUR = eur("0.00")
     }
 }
