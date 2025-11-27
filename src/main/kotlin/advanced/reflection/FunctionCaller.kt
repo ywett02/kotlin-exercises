@@ -8,16 +8,27 @@ import kotlin.reflect.typeOf
 import kotlin.test.assertEquals
 
 class FunctionCaller {
+    private val typeConstans = mutableMapOf<KType, Any?>()
+
     inline fun <reified T> setConstant(value: T) {
         setConstant(typeOf<T>(), value)
     }
 
     fun setConstant(type: KType, value: Any?) {
-        TODO()
+        typeConstans[type] = value
     }
 
     fun <T> call(function: KFunction<T>): T {
-        TODO()
+        val args = buildMap {
+            function.parameters.forEach { param ->
+                if(param.isOptional.not()) {
+                    require(typeConstans.contains(param.type))
+                    put(param, typeConstans[param.type])
+                }
+            }
+        }
+
+        return function.callBy(args)
     }
 }
 
