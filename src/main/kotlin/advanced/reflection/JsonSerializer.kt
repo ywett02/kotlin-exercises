@@ -2,12 +2,51 @@ package advanced.reflection.jsonserializer
 
 import org.junit.Test
 import kotlin.reflect.KClass
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.*
 import kotlin.test.assertEquals
 
-fun serializeToJson(value: Any): String = TODO()
+fun serializeToJson(value: Any): String = valueToJson(value)
+
+private fun valueToJson(value: Any?): String =
+    when (value) {
+        null, is Number, is Boolean -> "$value"
+        is String, is Char, is Enum<*> -> "\"$value\""
+        is Iterable<*> -> iterableToJson(value)
+        is Map<*, *> -> mapToJson(value)
+        else -> objectToJson(value)
+    }
+
+private fun iterableToJson(value: Iterable<*>): String =
+    value.joinToString(prefix = "[", postfix = "]") { valueToJson(it) }
+
+private fun mapToJson(value: Map<*, *>): String =
+    value.entries.joinToString(
+        prefix = "{",
+        postfix = "}"
+    ) { (key, value) -> "${valueToJson(key)}: ${valueToJson(value)}" }
+
+private fun objectToJson(value: Any): String {
+    val classReference = value::class
+    val classNameMapper = classReference.findAnnotation<SerializationNameMapper>()?.let(::createMapper)
+    val ignoreNulls = classReference.hasAnnotation<SerializationIgnoreNulls>()
+
+    return classReference.memberProperties
+        .filterNot { property -> property.hasAnnotation<SerializationIgnore>() }
+        .filterNot { property -> ignoreNulls && property.call(value) == null }
+        .joinToString(prefix = "{", postfix = "}") { property ->
+            val annotationName = property.findAnnotation<SerializationName>()
+            val mapper = property.findAnnotation<SerializationNameMapper>()?.let(::createMapper)
+
+            val name = annotationName?.name ?: mapper?.map(property.name) ?: classNameMapper?.map(property.name)
+            ?: property.name
+            val value = property.call(value)
+
+            "\"$name\": ${valueToJson(value)}"
+        }
+}
+
+private fun createMapper(annotation: SerializationNameMapper): NameMapper =
+    annotation.mapper.objectInstance ?: annotation.mapper.createInstance()
 
 @SerializationNameMapper(SnakeCaseName::class)
 @SerializationIgnoreNulls
@@ -332,6 +371,7 @@ class JsonSerializerTest {
             val defence: Int?,
             val extraDetails: String?,
         )
+
         class Creature(
             val name: String,
             val attack: Int?,
