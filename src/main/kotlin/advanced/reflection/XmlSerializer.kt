@@ -2,10 +2,54 @@ package advanced.reflection.xmlserializer
 
 import org.junit.Test
 import kotlin.reflect.KClass
-import kotlin.reflect.full.*
+import kotlin.reflect.full.createInstance
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
 
-fun serializeToXml(value: Any): String = TODO()
+fun serializeToXml(value: Any): String = valueToXml(value)
+
+fun valueToXml(value: Any?): String =
+    when (value) {
+        null, is Number, is Boolean -> "$value"
+        is String, is Char, is Enum<*> -> "$value"
+        is Iterable<*> -> value.joinToString(separator = "") { valueToXml(it) }
+        is Map<*, *> -> value.entries.joinToString(separator = "") { (key, value) -> "<$key>${valueToXml(value)}</$key>" }
+        else -> objectToXml(value)
+    }
+
+fun objectToXml(value: Any): String {
+    val classReference = value::class
+    val classNameMapper =
+        classReference.findAnnotation<SerializationNameMapper>()?.let(::createMapper)
+    val ignoreNulls = classReference.hasAnnotation<SerializationIgnoreNulls>()
+    val className = classNameMapper?.map(classReference.simpleName!!) ?: classReference.simpleName
+
+    return buildString {
+        append("<${className}>")
+
+        classReference.memberProperties
+            .filterNot { property -> property.hasAnnotation<SerializationIgnore>() }
+            .filterNot { property -> ignoreNulls && property.call(value) == null }
+            .forEach { property ->
+                val annotationName = property.findAnnotation<SerializationName>()
+                val mapper = property.findAnnotation<SerializationNameMapper>()
+                    ?.let(::createMapper)
+                val name = annotationName?.name ?: mapper?.map(property.name) ?: classNameMapper?.map(property.name)
+                ?: property.name
+                append("<${name}>")
+                append(valueToXml(property.call(value)))
+                append("</${name}>")
+            }
+
+        append("</${className}>")
+    }
+}
+
+private fun createMapper(annotation: SerializationNameMapper): NameMapper =
+    annotation.mapper.objectInstance ?: annotation.mapper.createInstance()
+
 
 fun main() {
     data class SampleDataClass(
@@ -120,6 +164,7 @@ class SnakeCaseName : NameMapper {
     override fun map(name: String): String =
         name.replace(pattern, "_$0").lowercase()
 }
+
 object UpperSnakeCaseName : NameMapper {
     val pattern = "(?<=.)[A-Z]".toRegex()
 
